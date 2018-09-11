@@ -372,30 +372,47 @@ See https://github.com/adobe-type-tools/cmap-resources
   </div>
   </body>
   <script>
-    function sign(){
-        var pageWidth = parseInt($(".page").css("width"));
-        //横向偏移量
-        var px = (document.documentElement.clientWidth-pageWidth)/2-8;
-        $(".easyui-draggable").css("left",px+"px");
-        $(".easyui-draggable").attr("display","inline");
-        
-        alert(px);
-    }
-    function onDrag(e){
-			var d = e.data;
-			if (d.left < 0){d.left = 0}
-			if (d.top < 0){d.top = 0}
-			if (d.left + $(d.target).outerWidth() > $(d.parent).width()){
-				d.left = $(d.parent).width() - $(d.target).outerWidth();
-			}
-			if (d.top + $(d.target).outerHeight() > $(d.parent).height()){
-				d.top = $(d.parent).height() - $(d.target).outerHeight();
-      }
-      
- 
-		}
 
-    var div = $(".easyui-draggable"); //签章div
+    $(document).ready(function(){ 
+      $(".easyui-draggable").hide();
+    });
+    var px;
+    var scrollPx=0;
+    var pageWidth;
+    var pageHeight;
+    function sign(){
+       pageWidth = parseInt($(".page").css("width"));
+       pageHeight = parseInt($(".page").css("height"));
+        //横向偏移量
+       px = (document.documentElement.clientWidth-pageWidth)/2-8;
+        $(".easyui-draggable").css("left",px+"px");
+        $(".easyui-draggable").show();
+    }
+    function onDrag(e){   
+			var d = e.data;
+			if (d.left < px){d.left = px}
+			if (d.top < 33){d.top = 33}
+			if (d.left + $(d.target).outerWidth() > $(d.parent).width() - px -16){
+				d.left = $(d.parent).width() - $(d.target).outerWidth()-px-16;
+			}
+			if (d.top + $(d.target).outerHeight() > $(d.parent).height() - 33){
+				d.top = $(d.parent).height() - $(d.target).outerHeight()-33;
+      }
+		}
+    function signxy(){
+      var realX = parseInt($(".easyui-draggable").css("left"))-px;    
+      var relativeY = parseInt($(".easyui-draggable").css("top"))-33;
+      var realY = relativeY + scrollPx;
+      var pageNum = parseInt(realY/pageHeight)+1;
+
+      console.log("当前页数："+pageNum);
+      console.log("实际页内偏移量：x: "+realX+",y: "+(realY%pageNum));
+    }
+
+    $("#viewerContainer").scroll(function() {
+      console.log(parseFloat($("#scaleSelect").find("option:selected").text())/100);
+      scrollPx =  $(this).scrollTop();
+    })
 
 
     //-----------------------------------------------------------------------------------------------------------------------------
