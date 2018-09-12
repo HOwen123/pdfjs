@@ -43,7 +43,7 @@ See https://github.com/adobe-type-tools/cmap-resources
 <!--easyUI-->
 <link rel="stylesheet" type="text/css" href="../easyui-1.6.2/themes/default/easyui.css">
 	<link rel="stylesheet" type="text/css" href="../easyui-1.6.2//themes/icon.css">
-	<link rel="stylesheet" type="text/css" href="../demo.css">
+	<!-- <link rel="stylesheet" type="text/css" href="../demo.css"> -->
 	<script type="text/javascript" src="../easyui-1.6.2/jquery.min.js"></script>
 	<script type="text/javascript" src="../easyui-1.6.2/jquery.easyui.min.js"></script>
 
@@ -209,20 +209,17 @@ See https://github.com/adobe-type-tools/cmap-resources
               </div>
               <div id="toolbarViewerMiddle">
                 <div class="splitToolbarButton">
-                  <button id="zoomOut" class="toolbarButton zoomOut" title="Zoom Out" tabindex="21" data-l10n-id="zoom_out">
+                  <button id="zoomOut" class="toolbarButton zoomOut" title="Zoom Out" tabindex="21" data-l10n-id="zoom_out" onclick="changeValue('-')">
                     <span data-l10n-id="zoom_out_label">Zoom Out</span>
                   </button>
                   <div class="splitToolbarButtonSeparator"></div>
-                  <button id="zoomIn" class="toolbarButton zoomIn" title="Zoom In" tabindex="22" data-l10n-id="zoom_in">
+                  <button id="zoomIn" class="toolbarButton zoomIn" title="Zoom In" tabindex="22" data-l10n-id="zoom_in" onclick="changeValue('+')">
                     <span data-l10n-id="zoom_in_label">Zoom In</span>
                    </button>
                 </div>
                 <span id="scaleSelectContainer" class="dropdownToolbarButton">
-                  <select id="scaleSelect" title="Zoom" tabindex="23" data-l10n-id="zoom">
-                    <option id="pageAutoOption" title="" value="auto" data-l10n-id="page_scale_auto">Automatic Zoom</option>
+                  <select id="scaleSelect" title="Zoom" tabindex="23" data-l10n-id="zoom" onchange="changeValue('')">
                     <option id="pageActualOption" title="" value="page-actual" selected="selected"  data-l10n-id="page_scale_actual">Actual Size</option>
-                    <option id="pageFitOption" title="" value="page-fit" data-l10n-id="page_scale_fit">Fit Page</option>
-                    <option id="pageWidthOption" title="" value="page-width" data-l10n-id="page_scale_width">Full Width</option>
                     <option id="customScaleOption" title="" value="custom" disabled="disabled" hidden="true"></option>
                     <option title="" value="0.5" data-l10n-id="page_scale_percent" data-l10n-args='{ "scale": 50 }'>50%</option>
                     <option title="" value="0.75" data-l10n-id="page_scale_percent" data-l10n-args='{ "scale": 75 }'>75%</option>
@@ -362,25 +359,88 @@ See https://github.com/adobe-type-tools/cmap-resources
 
     </div> <!-- outerContainer -->
     <div id="printContainer"></div>
-    <div class="easyui-draggable" data-options="onDrag:onDrag" style="width:100px;height:100px;top:33px;border:1px solid #ccc;z-index: 3;position: fixed;">
-        <img style="width:100px;height:100px;" src="../web/111.bmp"></img>
+    <div class="easyui-draggable" data-options="onDrag:onDrag" style="top:33px;border:1px solid #ccc;z-index: 3;position: fixed;">
+        <img class="sealImg" style="width:100px;height:100px;" src="../web/111.bmp"></img>
     </div>
   
     <div style="text-align: center;position: fixed;bottom: 15px;left: calc((100% - 100px)/2)">
       <button id="signature" class="btn-upload" style="width: 100px;background-color: red;" onclick="signxy()">计算</button>
-      <button id="signature" class="btn-upload" style="width: 100px;background-color: red;" onclick="sign()">准备签章</button>
+      <button id="signature" class="btn-upload" style="width: 100px;background-color: red;" onclick="readySign()">显示印章</button>
   </div>
   </body>
   <script>
+    //印章图片的大小
+    var constImgWidth;
+    var constImgHeight;
+    //页面偏移量
+    var px;
+    //滚动距离
+    var scrollPx=0;
+    //加载的页面大小
+    var pageWidth;
+    var pageHeight;
+    //判断鼠标滚轮是否滚动
+    var isMouseScroll = 0;
 
     $(document).ready(function(){ 
       $(".easyui-draggable").hide();
+      var imgWidth = parseInt($(".sealImg").css("width"));
+      var imgHeight = parseInt($(".sealImg").css("height"));
+      sessionStorage.constImgWidth = imgWidth;
+      sessionStorage.constImgHeight = imgHeight;
     });
-    var px;
-    var scrollPx=0;
-    var pageWidth;
-    var pageHeight;
-    function sign(){
+
+    $(document).keydown(function(event){
+      console.log(isMouseScroll);
+      if(event.keyCode == 17 && isMouseScroll != 0){
+        $(".easyui-draggable").hide();
+      }
+　　});
+
+    $(document).keyup(function(event){
+      if(event.keyCode == 17){
+        isMouseScroll = 0;
+        readySign();
+      }  
+　　});
+
+    //鼠标滚动监听事件
+    var scrollFunc = function (e) {
+        e = e || window.event;
+        //判断浏览器IE，谷歌滑轮事件
+        if (e.wheelDelta) {               
+            //当滑轮向上滚动时
+            if (e.wheelDelta > 0) { 
+                isMouseScroll = 1;
+            }
+            //当滑轮向下滚动时
+            if (e.wheelDelta < 0) { 
+                isMouseScroll = -1;
+            }
+             //Firefox滑轮事件
+        } else if (e.detail) { 
+          //当滑轮向上滚动时
+            if (e.detail> 0) { 
+                isMouseScroll = 1;
+            }
+            //当滑轮向下滚动时
+            if (e.detail< 0) { 
+                isMouseScroll = -1;
+            }
+        }
+    }
+    //给页面绑定滑轮滚动事件
+    if (document.addEventListener) {
+        document.addEventListener('DOMMouseScroll', scrollFunc, false);
+    }
+    //滚动滑轮触发scrollFunc方法
+    window.onmousewheel = document.onmousewheel = scrollFunc;  
+
+    //准备签章
+    function readySign(){
+       var realValue = parseInt($("#scaleSelect").find("option:selected").text())/100;
+       $(".sealImg").css("width",sessionStorage.constImgWidth*realValue);
+       $(".sealImg").css("height",sessionStorage.constImgHeight*realValue);
        pageWidth = parseInt($(".page").css("width"));
        pageHeight = parseInt($(".page").css("height"));
         //横向偏移量
@@ -388,6 +448,8 @@ See https://github.com/adobe-type-tools/cmap-resources
         $(".easyui-draggable").css("left",px+"px");
         $(".easyui-draggable").show();
     }
+
+    //拖拽函数
     function onDrag(e){   
 			var d = e.data;
 			if (d.left < px){d.left = px}
@@ -395,57 +457,76 @@ See https://github.com/adobe-type-tools/cmap-resources
 			if (d.left + $(d.target).outerWidth() > $(d.parent).width() - px -16){
 				d.left = $(d.parent).width() - $(d.target).outerWidth()-px-16;
 			}
-			if (d.top + $(d.target).outerHeight() > $(d.parent).height() - 33){
+			if (d.top + $(d.target).outerHeight() > $(d.parent).height() - 33){ 
 				d.top = $(d.parent).height() - $(d.target).outerHeight()-33;
       }
-		}
+    }
+
+    //计算横x纵y坐标
     function signxy(){
+      pageWidth = parseInt($(".page").css("width"));
+      pageHeight = parseInt($(".page").css("height"));
       var realX = parseInt($(".easyui-draggable").css("left"))-px;    
       var relativeY = parseInt($(".easyui-draggable").css("top"))-33;
       var realY = relativeY + scrollPx;
       var pageNum = parseInt(realY/pageHeight)+1;
 
       console.log("当前页数："+pageNum);
-      console.log("实际页内偏移量：x: "+realX+",y: "+(realY%pageNum));
+      console.log("当前页宽："+pageWidth+", 当前页宽："+ pageHeight);
+      console.log("实际页内偏移量：x: "+realX+",y: "+(realY%pageHeight));
     }
 
+    //获取滚动距离
     $("#viewerContainer").scroll(function() {
-      console.log(parseFloat($("#scaleSelect").find("option:selected").text())/100);
       scrollPx =  $(this).scrollTop();
     })
 
 
-    //-----------------------------------------------------------------------------------------------------------------------------
-    // var temp;
-    // var currentPage = 1;
-    // var scrollPxTemp = 0;
-    // var scrollPx = 0;
-    // $("#viewerContainer").scroll(function() {
-    //   var numPages = $("#numPages").text();
-    //   // 获取页数的
-    //   if(numPages != "" && numPages != temp){
-    //     var pages = numPages.split("/")[1];
-    //     temp = numPages;  
-    //     var heightNum = pages*1056;
-    //     $(".mydiv").attr("style","width: 816px; height:"+ heightNum+"px; position: absolute;top:9px;left:50%;z-index:1;margin-left:-408px;overflow:hidden;");
-    //   }
-      
-    //    currentPage = $("#pageNumber").val();
-    //    scrollPx =  $(this).scrollTop();
-    //   //实现随鼠标拖动改变
-    //   // $(".easyui-draggable").attr("style","width: 100px; height: 100px; border: 1px solid rgb(204, 204, 204); position: absolute;"+" left:"+ 0+"px; top:"+ ($(this).scrollTop())+"px;");
-      
-      
-    // });
-    // function signxy(){
-    //   currentPage = $("#pageNumber").val();
-    //   var topPx =scrollPx + parseInt($(".easyui-draggable").css("top")) ;
-    //   var leftPx = parseInt($(".easyui-draggable").css("left"));
-    //   var topPx
-    //    alert("当前页："+toppx+", x: "+leftPx+", y: "+ (topPx % 1056));
-    // }
-
+    function changeValue(param){
+      var realValue = parseInt($("#scaleSelect").find("option:selected").text())/100;
+      var newScale = realValue;
+      // changeBox(newScale);
+      if(param == "-"){
+        //放大缩小设置新值
+        newScale = (newScale / 1.1 ).toFixed(2);
+        newScale = Math.floor(newScale * 10) / 10;
+        newScale = Math.max(0.25, newScale);
+        console.log(newScale)
+        changeBox(newScale);
+        // console.log(newScale);
+      }
+      if(param == "+"){
+        newScale = (newScale * 1.1).toFixed(2);
+        newScale = Math.ceil(newScale * 10) / 10;
+        newScale = Math.min(10.0, newScale);
+        console.log(newScale);
+        changeBox(newScale);
+      }
+      if(param == ""){
+        // console.log(newScale);
+        changeBox(newScale);
+      }   
+    }
     
+    //修改印章的大小
+    function changeBox(newScale){
+        // console.log(sessionStorage.constImgWidth+","+sessionStorage.constImgHeight);
+        $(".sealImg").css("width",sessionStorage.constImgWidth*newScale);
+        $(".sealImg").css("height",sessionStorage.constImgHeight*newScale);
+          // pageWidth = parseInt($(".page").css("width"));
+          // pageHeight = parseInt($(".page").css("height"));
+          // //横向偏移量
+          // px = (document.documentElement.clientWidth-pageWidth)/2-8;
+          // $(".easyui-draggable").css("left",px+"px");
+         
+          setTimeout(function(){
+            pageWidth = parseInt($(".page").css("width"));
+          pageHeight = parseInt($(".page").css("height"));
+          //横向偏移量
+          px = (document.documentElement.clientWidth-pageWidth)/2-8;
+          $(".easyui-draggable").css("left",px+"px");
+          },500);
+    }    
 	</script>
 </html>
 

@@ -1471,6 +1471,7 @@ var PDFViewerApplication = {
       newScale = Math.floor(newScale * 10) / 10;
       newScale = Math.max(MIN_SCALE, newScale);
     } while (--ticks > 0 && newScale > MIN_SCALE);
+   
     this.pdfViewer.currentScaleValue = newScale;
   },
   get pagesCount() {
